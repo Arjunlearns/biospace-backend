@@ -7,7 +7,7 @@ import pandas as pd
 app = Flask(__name__)
 CORS(app)
 
-# Determine dataset path relative to this file
+# Dataset path relative to backend folder
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, 'dataset', '608publications.csv')
 
@@ -29,11 +29,10 @@ for i, r in enumerate(records):
 def home():
     return jsonify({"message": "Welcome to BioSpace Explorer API!"})
 
-# All experiments route
+# All experiments
 @app.route('/api/experiments')
 def get_experiments():
-    data = df.to_dict(orient='records')
-    return jsonify(data)
+    return jsonify(df.to_dict(orient='records'))
 
 # Publications route with filters and pagination
 @app.route('/api/publications', methods=['GET'])
@@ -51,18 +50,18 @@ def get_publications():
     if q:
         filtered = [
             r for r in filtered
-            if q in (r.get('Title','').lower() + ' ' + r.get('Summary','').lower())
+            if q in (r.get('Title', '').lower() + ' ' + r.get('Summary', '').lower())
         ]
 
     if category:
         cats = [c.strip() for c in category.split(',') if c.strip()]
-        filtered = [r for r in filtered if any(c in r.get('Category','').lower() for c in cats)]
+        filtered = [r for r in filtered if any(c in r.get('Category', '').lower() for c in cats)]
 
     if organism:
-        filtered = [r for r in filtered if organism in r.get('Organism','').lower()]
+        filtered = [r for r in filtered if organism in r.get('Organism', '').lower()]
 
     if impact:
-        filtered = [r for r in filtered if impact in r.get('Impact','').lower()]
+        filtered = [r for r in filtered if impact in r.get('Impact', '').lower()]
 
     total = len(filtered)
 
@@ -85,20 +84,17 @@ def get_publication(pub_id):
         abort(404)
     return jsonify(records[pub_id])
 
-# Basic stats route
+# Basic stats
 @app.route('/api/publications/stats', methods=['GET'])
 def publications_stats():
     df_local = pd.DataFrame(records)
-    by_category = df_local['Category'].value_counts().to_dict()
-    by_organism = df_local['Organism'].value_counts().to_dict()
-    by_impact = df_local['Impact'].value_counts().to_dict()
     return jsonify({
-        "by_category": by_category,
-        "by_organism": by_organism,
-        "by_impact": by_impact,
+        "by_category": df_local['Category'].value_counts().to_dict(),
+        "by_organism": df_local['Organism'].value_counts().to_dict(),
+        "by_impact": df_local['Impact'].value_counts().to_dict(),
         "total_publications": len(records)
     })
 
-# Run app
+# Run app with PORT environment variable for Render
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

@@ -1,4 +1,4 @@
-Flask
-pandas
+flask
 flask-cors
-
+pandas
+gunicorn
